@@ -1,0 +1,89 @@
+// Specify MongoDB as the datasource
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// Generate the Prisma Client
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Role model representing different user roles with specific permissions
+model Role {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  name        RoleName    @unique
+  description String?
+  users       User[]
+}
+
+// Enum representing the different possible roles
+enum RoleName {
+  ADMIN
+  USER
+}
+
+// User model representing registered users of the app
+model User {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  email      String     @unique
+  password   String
+  name       String?
+  roleId     String     @db.ObjectId
+  role       Role       @relation(fields: [roleId], references: [id])
+  favorites  Favorite[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  Comment Comment[]
+}
+
+// Resource model representing downloadable resources
+model Resource {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String     @unique
+  title       String
+  description String
+  url         String
+  categoryId  String     @db.ObjectId
+  category    Category   @relation(fields: [categoryId], references: [id])
+  author      String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  comments    Comment[]
+
+  Favorite Favorite[]
+}
+
+// Category model representing categories of resources
+model Category {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String     @unique
+  description String?
+  resources   Resource[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Comment model representing comments on resources
+model Comment {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  comment     String
+  resourceId  String     @db.ObjectId
+  resource    Resource   @relation(fields: [resourceId], references: [id])
+  userId      String     @db.ObjectId
+  user        User       @relation(fields: [userId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Favorite model representing user-favorited resources
+model Favorite {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String     @db.ObjectId
+  user        User       @relation(fields: [userId], references: [id])
+  resourceId  String     @db.ObjectId
+  resource    Resource   @relation(fields: [resourceId], references: [id])
+  createdAt   DateTime   @default(now())
+}
+
